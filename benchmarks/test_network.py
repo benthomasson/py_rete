@@ -8,6 +8,10 @@ from py_rete.fact import Fact
 from py_rete.conditions import Bind
 from py_rete.conditions import Filter
 from py_rete.network import ReteNetwork
+import pytest
+import asyncio
+
+pytestmark = pytest.mark.asyncio
 
 
 def init_network():
@@ -25,17 +29,17 @@ def init_network():
     return net
 
 
-def test_fire():
-    fire_counting()
+async def test_fire():
+    await fire_counting()
 
 
-def add_to_depth():
+async def add_to_depth():
     net = ReteNetwork()
 
     @Production(Fact(number=V('x'), depth=V('xd')) &
                 Fact(number=V('y'), depth=V('yd')) &
                 Filter(lambda xd, yd: xd+yd < 1))
-    def add(net, x, y, xd, yd):
+    async def add(net, x, y, xd, yd):
         f = Fact(number=x+y, depth=xd+yd+1)
         net.add_fact(f)
 
@@ -50,16 +54,22 @@ def add_to_depth():
     while len(list(net.new_matches)) > 0:
         # print(len(list(net.new_matches)))
         m = net.get_new_match()
-        m.fire()
+        await m.fire()
+
+def add_to_depth_sync():
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(add_to_depth())
+    loop.close()
 
 
-def fire_counting():
+
+async def fire_counting():
     net = ReteNetwork()
 
     @Production(Fact(number=V('x')) &
                 ~Fact(before=V('x')) &
                 Bind(lambda x: str(int(x) + 1), V('y')))
-    def add1(net, x, y):
+    async def add1(net, x, y):
         f = Fact(number=y, before=x)
         net.add_fact(f)
 
@@ -72,12 +82,17 @@ def fire_counting():
     print(net)
 
     for i in range(5):
-        net.run(1)
+        await net.run(1)
         assert len(net.wmes) == (3*(i+1))+2
 
 
+def fire_counting_sync():
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(fire_counting())
+    loop.close()
+
 def test_fire_counting(benchmark):
-    benchmark(fire_counting)
+    benchmark(fire_counting_sync)
 
 
 def add_wmes():
@@ -100,7 +115,7 @@ def add_wmes():
 
 
 def test_add_to_depth(benchmark):
-    benchmark(add_to_depth)
+    benchmark(add_to_depth_sync)
 
 
 def test_init_network(benchmark):
@@ -166,4 +181,4 @@ def test_facts():
 
 
 if __name__ == "__main__":
-    add_to_depth()
+    add_to_depth_sync()

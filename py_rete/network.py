@@ -52,7 +52,7 @@ class ReteNetwork:
         self.production_counter: int = 0
         self.productions: Set[Production] = set()
 
-    def run(self, n: int = 10) -> None:
+    async def run(self, n: int = 10) -> None:
         """
         First n rules, chosen at random. After each rule is fired the facts are
         updated and new matches computed.
@@ -62,7 +62,7 @@ class ReteNetwork:
             if len(matches) <= 0:
                 break
             match = random.choice(matches)
-            match.fire()
+            await match.fire()
             n -= 1
 
     def __repr__(self):

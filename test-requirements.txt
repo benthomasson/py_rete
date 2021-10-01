@@ -1,5 +1,6 @@
 pytest
 pytest-benchmark
 pytest-mypy
+pytest-asyncio
 coverage
 flake8

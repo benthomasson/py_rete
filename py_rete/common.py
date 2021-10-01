@@ -40,8 +40,8 @@ class Match:
     pnode: PNode
     token: Token
 
-    def fire(self):
-        return self.pnode.production.fire(self.token)
+    async def fire(self):
+        return await self.pnode.production.fire(self.token)
 
 
 class WME:

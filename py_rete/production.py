@@ -121,12 +121,15 @@ class Production():
                 if isinstance(disjunct, tuple) else
                 list(get_rete_conds(AND(disjunct))) for disjunct in disjuncts]
 
-    def fire(self, token: Token):
+    async def fire(self, token: Token):
         kwargs = {arg: self._rete_net if arg == 'net' else
                   self._rete_net.facts[token.binding[V(arg)]] if
                   token.binding[V(arg)] in self._rete_net.facts else
                   token.binding[V(arg)] for arg in self._wrapped_args}
-        return self(**kwargs)
+        if self._wrapped_args:
+            kwargs = {k: v for k, v in kwargs.items()
+                      if k in self._wrapped_args}
+        return await self.__wrapped__(**kwargs)
 
     def __call__(self, *args, **kwargs):
         if self.__wrapped__ is None:
@@ -142,10 +145,7 @@ class Production():
                 return update_wrapper(self, func)
 
         else:
-            if self._wrapped_args:
-                kwargs = {k: v for k, v in kwargs.items()
-                          if k in self._wrapped_args}
-            return self.__wrapped__(*args, **kwargs)
+            raise Exception('Unused branch')
 
     def __repr__(self) -> str:
         if self.__wrapped__ is None:

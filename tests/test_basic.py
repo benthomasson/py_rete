@@ -12,6 +12,9 @@ from py_rete.conditions import Bind
 from py_rete.conditions import OR
 from py_rete.conditions import NOT
 from py_rete.conditions import Filter
+import pytest
+
+pytestmark = pytest.mark.asyncio
 
 
 def test_readme_facts():
@@ -73,7 +76,7 @@ def test_readme_production_nested_match():
         print(name)
 
 
-def test_readme_network():
+async def test_readme_network():
 
     net = ReteNetwork()
 
@@ -88,13 +91,13 @@ def test_readme_network():
     f1 = Fact(light_color="red")
 
     @Production(V('fact') << Fact(light_color="red"))
-    def make_green(net, fact):
+    async def make_green(net, fact):
         print('making green')
         fact['light_color'] = 'green'
         net.update_fact(fact)
 
     @Production(V('fact') << Fact(light_color="green"))
-    def make_red(net, fact):
+    async def make_red(net, fact):
         print('making red')
         fact['light_color'] = 'red'
         net.update_fact(fact)
@@ -106,12 +109,12 @@ def test_readme_network():
     light_net.update_fact(f1)
 
     # print(light_net)
-    light_net.run(5)
+    await light_net.run(5)
 
     matches = list(light_net.matches)
     print(matches)
     new = list(light_net.new_matches)  # noqa E262
-    matches[0].fire()
+    await matches[0].fire()
 
 
 def test_token():
@@ -165,16 +168,16 @@ def test_add_remove_empty():
     assert len(net.beta_root.children) == 0
 
 
-def test_add_remove_bind():
+async def test_add_remove_bind():
     net = ReteNetwork()
 
     @Production(Bind(lambda: 5, V('x')))
-    def bind(x):
+    async def bind(x):
         return x
 
     net.add_production(bind)
     assert len(net.beta_root.children) == 1
-    assert list(net.matches)[0].fire() == 5
+    assert (await list(net.matches)[0].fire()) == 5
 
     net.remove_production(bind)
     assert len(net.beta_root.children) == 0
